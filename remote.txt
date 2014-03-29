@@ -1,0 +1,66 @@
+;An introduction message sent when entering a channel.
+on *:JOIN:#: {
+  if ($nick == $me) {
+    msg $chan Bot is online. Let's try to not get bopped by mods today. MrDestructoid
+  }
+}
+
+;Reads a random line from vhalfbot.txt. Currently set to only allowed to be called every 30 seconds.
+on *:TEXT:!rng:#: { 
+  if (%floodrng) { return }
+  set -u30 %floodrng On
+  var %linenum = $r(1,$lines(vhalfbot.txt)) $+
+  msg $chan $read(vhalfbot.txt, n, %linenum ) $+
+  ;msg $chan the line number read was %linenum $+
+} 
+
+on *:TEXT:!test:#: {  
+  if ( $nick == vhalf) { 
+    msg $chan This bot was made by vhalf. MrDestructoid
+  }  
+}
+
+;Adds whatever follows !add to the textfile. Currently set to only allow myself to call the command.
+on *:TEXT:!add *:#: { 
+  if ( $nick == vhalf ) { 
+    if (%floodadd) { return }
+    set -u10 %floodadd On
+    /write -il1 yourNewLinks.txt $2- $+
+    msg $chan Added a new link. Please wait a bit before trying again. MrDestructoid $+
+  } 
+  else {
+    if (%floodadddeny) { return }
+    set -u10 %floodadddeny On
+    msg $chan Sorry, $nick $+. . Access denied. MrDestructoid $+ 
+  } 
+}
+
+;an alias to be called that starts the cycle alias, calls every 90 seconds
+alias auto {
+  msg $chan Starting. Bot set to cycle. MrDestructoid
+  set %line $lines(sfw.txt)
+  /timerLinks 0 90 cycle
+}
+
+;an alias to send a random line from the text file as a message
+alias rng {
+  var %linenum = $r(1,$lines(sfw.txt)) 
+  msg $chan $read(sfw.txt, n, %linenum ) 
+}
+
+;an alias to go thourgh the text file line by line. the auto alias controls how often this is called
+alias cycle { 
+  msg $chan $read(sfw.txt, n, %line) 
+  dec %line
+  if ( %line == 0 ) {
+    %line = $lines(sfw.txt)
+  }
+}
+
+;ends the timer used to control cycle, effectively stopping it
+on *:TEXT:!stop:#: {
+  if ( $nick == vhalf ) {
+    msg $chan Automode has stopped. MrDestructoid
+    .timerLinks off
+  }
+}
